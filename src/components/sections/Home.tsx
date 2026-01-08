@@ -34,9 +34,9 @@ const Home = () => {
 
       {/* titulo */}
       <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-tight text-left">
-        <span className="block text-purple">Adaptative</span>
-        <span className="block text-cyan">Digital</span>
-        <span className="block text-purple">Innovation</span>
+        <span className="text-purple">Adaptative</span>
+        <span className="block">Digital</span>
+        <span className="block">Innovation</span>
       </h2>
     </div>
 
