@@ -14,8 +14,8 @@ interface RadialMenuProps {
 const menuItems = [
   { id: 'home', label: 'Inicio', icon: House },
   { id: 'projects', label: 'Proyectos', icon: Folder },
-  { id: 'process', label: 'Proceso', icon: Workflow },
-  { id: 'team', label: 'Integrantes', icon: Users },
+  { id: 'team', label: 'Equipo', icon: Users },
+  { id: 'about', label: 'Empresa', icon: Workflow },
 ];
 
 const RadialMenu = ({

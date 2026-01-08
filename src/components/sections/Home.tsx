@@ -26,7 +26,7 @@ const Home = () => {
     <div className="flex items-center justify-center gap-6 mb-6">
       {/* Logo */}
       <img 
-        src="/home/logo.png" 
+        src="/home/logo_3.png" 
         alt="Logo" 
         className="w-40 h-40 md:w-56 md:h-56 lg:w-72 lg:h-72 object-contain"
       />
@@ -34,9 +34,9 @@ const Home = () => {
 
       {/* titulo */}
       <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-tight text-left">
-        <span className="block">Interacción</span>
-        <span className="block">Humano</span>
-        <span className="block text-purple">Computador</span>
+        <span className="block">Adaptative</span>
+        <span className="block">Digital</span>
+        <span className="block text-purple">Innovation</span>
       </h2>
     </div>
 

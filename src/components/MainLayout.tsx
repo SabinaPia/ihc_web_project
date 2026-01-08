@@ -2,10 +2,10 @@ import { useState } from "react";
 import { AnimatePresence, motion} from "framer-motion";
 import RadialMenu from "./RadialMenu";
 import Home from "./sections/Home";
-import ProjectsSimplified from "./sections/ProjectsSimplified";
-import Process from "./sections/Process";
-import Repository from "./sections/Repository";
+import Projects from "./sections/Projects";
 import Team from "./sections/Team";
+import About from "./sections/About";
+
 
 const MainLayout = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -26,12 +26,10 @@ const MainLayout = () => {
 
   const sections: Record<string, JSX.Element> = {
     home: <Home />,
-    projects: <ProjectsSimplified />,
-    process: (
-      <Process activeStep={processStep} onStepChange={handleProcessStepChange} />
-    ),
-    repository: <Repository />,
+    projects: <Projects/>,
     team: <Team />,
+    about: <About />,
+    
   };
 
   return (
