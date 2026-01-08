@@ -1,228 +1,57 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
-import { ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { ExternalLink, Github, Eye, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { api, Project } from "@/services/mockApi";
 import { cn } from "@/lib/utils";
 
-interface ProjectData {
-  id: string;
-  title: string;
-  shortDescription: string;
-  mission: string;
-  details: string[];
-}
-
-const vrProject: ProjectData = {
-  id: "vr-game",
-  title: "Videojuego VR - Warren House",
-  shortDescription: "Experiencia inmersiva de realidad virtual donde el jugador aprende a interpretar con el ambiente y usar voz con gestos para debilitar y expulsar a las entidades.",
-  mission: "Diseñar y evaluar una experiencia VR de casa embrujada, que fomente la resolución intuitiva mediante pistas ambientales y control multimodal (voz y manos), aplicando principios de diseño centrado en la persona.",
-  details: [
-    "Diseño Centrado en el Usuario con ciclos de prototipado y pruebas de usabilidad sin tutoriales explícitos",
-    "Afordancias y significadores que guían a leer la biblia y usar la linterna para debilitar/expulsar al ente",
-    "Interacción multimodal mediante reconocimiento de voz, XR Hands y apuntado con linterna mediante XR Interaction Toolkit",
-    "Métricas de descubribilidad y tasa de éxito de tareas, con ayuda de análisis de errores",
-    "Desarrollado con Unity, compatible con Meta/Oculus"
-  ]
-};
-
-interface ProjectCardProps {
-  project: ProjectData;
-  onNavigateToProcess: () => void;
-}
-
-const ProjectCard = ({ project, onNavigateToProcess }: ProjectCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const detailsRef = useRef<HTMLDivElement>(null);
-  const moreInfoButtonRef = useRef<HTMLButtonElement>(null);
-  const panelTitleRef = useRef<HTMLHeadingElement>(null);
+const Projects = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [selectedProject, setSelectedProject] = useState<string>('1');
+  const [activeStage, setActiveStage] = useState<number>(1);
   
-  const [cardRef, cardInView] = useInView({ 
-    threshold: 0.2, 
-    triggerOnce: true 
-  });
+  const [headerRef, headerInView] = useInView({ threshold: 0.3, triggerOnce: true });
+  const [contentRef, contentInView] = useInView({ threshold: 0.2, triggerOnce: true });
 
-  const handleToggleExpand = () => {
-    if (isAnimating) return;
-    
-    setIsAnimating(true);
-    
-    if (isExpanded) {
-      // Collapsing
-      setIsExpanded(false);
-      setTimeout(() => {
-        setIsAnimating(false);
-        // Return focus to "Más info" button
-        moreInfoButtonRef.current?.focus();
-      }, 180);
-    } else {
-      // Expanding
-      setIsExpanded(true);
-      setTimeout(() => {
-        setIsAnimating(false);
-        // Move focus to panel title
-        panelTitleRef.current?.focus();
-      }, 240);
-    }
-  };
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const data = await api.getProjects();
+        setProjects(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProjects();
+  }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleToggleExpand();
-    }
-  };
+  const allTags = ['all', ...Array.from(new Set(projects.flatMap(p => p.tags)))];
+  const filteredProjects = selectedTag === 'all' 
+    ? projects 
+    : projects.filter(p => p.tags.includes(selectedTag));
 
-  return (
-    <div 
-      ref={cardRef}
-      className={cn(
-        "bg-surface border border-purple-border rounded-xl overflow-hidden transition-all duration-300",
-        cardInView ? "animate-fade-in" : "opacity-0 translate-y-8",
-        isExpanded && "border-cyan/30 shadow-elevated"
-      )}
-    >
-      {/* Collapsed State */}
-      <div className="p-6 space-y-4">
-        <h3 className="text-2xl font-semibold text-text-primary">
-          {project.title}
-        </h3>
-        
-        <p className="text-text-secondary leading-relaxed text-base">
-          {project.shortDescription}
-        </p>
+  const currentProject = projects.find(p => p.id === selectedProject);
+  const currentStage = currentProject?.stages.find(stage => stage.id === activeStage);
 
-        {/* Action Buttons - Collapsed State */}
-        <div className="flex gap-3 pt-2">
-          <Button
-            ref={moreInfoButtonRef}
-            onClick={handleToggleExpand}
-            onKeyDown={handleKeyDown}
-            className="bg-purple text-white hover:bg-purple/90 focus:ring-2 focus:ring-cyan focus:ring-offset-2 focus:ring-offset-background"
-            aria-expanded={isExpanded}
-            aria-controls={`project-details-${project.id}`}
-            disabled={isAnimating}
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="w-4 h-4 mr-2" />
-                Colapsar
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4 mr-2" />
-                Más info
-              </>
-            )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={onNavigateToProcess}
-            className="border-purple-border bg-purple-translucent hover:bg-purple/10 hover:border-cyan/50 focus:ring-2 focus:ring-cyan focus:ring-offset-2 focus:ring-offset-background"
-          >
-            <ArrowRight className="w-4 h-4 mr-2" />
-            Proceso
-          </Button>
+  if (loading) {
+    return (
+      <section className="py-20">
+        <div className="h-8 bg-purple-translucent rounded animate-pulse mb-8"></div>
+        <div className="grid grid-cols-12 gap-6 h-96">
+          <div className="col-span-3 bg-purple-translucent rounded animate-pulse"></div>
+          <div className="col-span-6 bg-purple-translucent rounded animate-pulse"></div>
+          <div className="col-span-3 bg-purple-translucent rounded animate-pulse"></div>
         </div>
-      </div>
-
-      {/* Expanded Panel */}
-      {(isExpanded || isAnimating) && (
-        <div
-          id={`project-details-${project.id}`}
-          ref={detailsRef}
-          className={cn(
-            "border-t border-purple-border bg-surface/50 overflow-hidden",
-            isExpanded ? "animate-expand" : "animate-collapse",
-            // Respect reduced motion preference
-            "motion-reduce:animate-none motion-reduce:transition-none"
-          )}
-          role="region"
-          aria-labelledby={`project-title-${project.id}`}
-        >
-          <div className="p-6 space-y-6">
-            {/* Mission Section */}
-            <div>
-              <h3 
-                ref={panelTitleRef}
-                id={`project-title-${project.id}`}
-                className="text-lg font-semibold text-text-primary mb-3 focus:outline-none rounded"
-                tabIndex={-1}
-              >
-                Misión del proyecto
-              </h3>
-              <p className="text-text-secondary leading-relaxed">
-                {project.mission}
-              </p>
-            </div>
-
-            {/* More Information Section */}
-            <div>
-              <h4 className="text-base font-medium text-text-primary mb-3">
-                Más información del proyecto
-              </h4>
-              <ul className="space-y-2 text-text-secondary">
-                {project.details.map((detail, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-cyan rounded-full mt-2 flex-shrink-0" />
-                    {detail}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Action Buttons - Expanded State */}
-            <div className="flex gap-3 pt-4 border-t border-purple-border/50">
-              <Button
-                variant="outline"
-                onClick={onNavigateToProcess}
-                className="border-purple-border bg-purple-translucent hover:bg-purple/10 hover:border-cyan/50 focus:ring-2 focus:ring-cyan focus:ring-offset-2 focus:ring-offset-background"
-              >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Proceso
-              </Button>
-              
-              <Button
-                onClick={handleToggleExpand}
-                onKeyDown={handleKeyDown}
-                className="bg-cyan text-white hover:bg-cyan/90 focus:ring-2 focus:ring-cyan focus:ring-offset-2 focus:ring-offset-background"
-                aria-expanded={isExpanded}
-                aria-controls={`project-details-${project.id}`}
-                disabled={isAnimating}
-              >
-                <ChevronUp className="w-4 h-4 mr-2" />
-                Colapsar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ProjectsSimplified = () => {
-  const [headerRef, headerInView] = useInView({ 
-    threshold: 0.3, 
-    triggerOnce: true 
-  });
-
-  const handleNavigateToProcess = () => {
-    const processElement = document.getElementById('process');
-    if (processElement) {
-      processElement.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-  };
+      </section>
+    );
+  }
 
   return (
     <section className="py-20">
       <div className="space-y-8">
-        {/* Header */}
         <div 
           ref={headerRef}
           className={cn(
@@ -230,27 +59,113 @@ const ProjectsSimplified = () => {
             headerInView ? "animate-fade-in" : "opacity-0 translate-y-8"
           )}
         >
-          <h2 className="text-4xl font-bold text-text-primary mb-4">
-            Proyectos
-          </h2>
+          <h2 className="text-4xl font-bold text-text-primary mb-4">Empresa</h2>
           <p className="text-text-secondary text-lg mb-8">
-            Explora nuestros proyectos destacados y las tecnologías implementadas.
+            Detalles de la Empresa
           </p>
         </div>
 
-        {/* Single Project Card */}
-        <div className="space-y-6">
-          <ProjectCard 
-            project={vrProject}
-            onNavigateToProcess={handleNavigateToProcess}
-          />
-          
-          {/* Placeholder for second project (hidden) */}
-          {/* Future project will go here */}
+        {/* Three Panel Layout */}
+        <div 
+          ref={contentRef}
+          className={cn(
+            "grid grid-cols-12 gap-6 min-h-[500px] transition-all duration-700 transform",
+            contentInView ? "animate-scale-in" : "opacity-0 scale-95"
+          )}
+        >
+          {/* Projects Panel (Left) */}
+          <div className="col-span-12 md:col-span-6">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-text-primary mb-4">Alineamientos</h3>
+              {filteredProjects.map((project, index) => (
+                <div key={project.id}>
+                  <button
+                    onClick={() => {
+                      setSelectedProject(project.id);
+                      setActiveStage(1);
+                    }}
+                    className={cn(
+                      "w-full text-left p-4 rounded-lg border transition-smooth relative",
+                      selectedProject === project.id
+                        ? "bg-purple text-white border-cyan shadow-subtle"
+                        : "bg-surface text-text-secondary border-purple-border hover:text-text-primary hover:bg-purple/5 hover:border-cyan/30"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border",
+                        selectedProject === project.id 
+                          ? "bg-cyan text-background border-cyan" 
+                          : "bg-purple-translucent border-purple-border"
+                      )}>
+                        {project.id}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">{project.title}</h4>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Stages (Expandable when project is selected) */}
+                  {selectedProject === project.id && (
+                    <div className="ml-6 mt-2 space-y-2">
+                      {project.stages.map((stage, stageIndex) => (
+                        <button
+                          key={stage.id}
+                          onClick={() => setActiveStage(stage.id)}
+                          className={cn(
+                            "w-full text-left p-3 rounded-lg border transition-smooth text-xs",
+                            activeStage === stage.id
+                              ? "bg-cyan/20 text-cyan border-cyan"
+                              : "bg-surface/50 text-text-secondary border-purple-border/50 hover:text-text-primary hover:bg-purple/5"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border",
+                              activeStage === stage.id
+                                ? "bg-cyan text-white border-cyan"
+                                : "bg-purple-translucent border-purple-border"
+                            )}>
+                              {project.id}.{stageIndex + 1}
+                            </div>
+                            <span className="font-medium">{stage.title}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Connection line between projects */}
+                  {index < filteredProjects.length - 1 && (
+                    <div className="ml-8 w-0.5 h-6 bg-purple-border my-2"></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Viewer Panel (Right) */}
+          <div className="col-span-12 md:col-span-6">
+            <div className="bg-surface border border-purple-border rounded-xl p-6 h-full">
+              <h3 className="text-lg font-semibold text-text-primary mb-4">
+                {currentStage?.title}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-text-primary mb-2">Proyecto</h4>
+                  <p className="text-text-secondary text-xs leading-relaxed">
+                    {currentProject?.description} /* colocar stages.summary */
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-export default ProjectsSimplified;
+export default Projects;
